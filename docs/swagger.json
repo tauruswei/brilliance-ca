@@ -1,0 +1,77 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Golang api of demo",
+        "title": "Golang Esign API",
+        "termsOfService": "http://github.com",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.cnblogs.com",
+            "email": "×××@qq.com"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/oracle/invoke": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取数据",
+                "parameters": [
+                    {
+                        "description": "QueryBaseInfo",
+                        "name": "QueryBaseInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Envelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Envelope"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.Envelope": {
+            "type": "object",
+            "properties": {
+                "certificate": {
+                    "description": "证书",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "data": {
+                    "description": "业务合约请求数据, 对应 QueryBaseInfo",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "sig": {
+                    "description": "签名值",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        }
+    }
+}

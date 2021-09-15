@@ -1,0 +1,51 @@
+definitions:
+  model.Envelope:
+    properties:
+      certificate:
+        description: 证书
+        items:
+          type: integer
+        type: array
+      data:
+        description: 业务合约请求数据, 对应 QueryBaseInfo
+        items:
+          type: integer
+        type: array
+      sig:
+        description: 签名值
+        items:
+          type: integer
+        type: array
+    type: object
+info:
+  contact:
+    email: ×××@qq.com
+    name: API Support
+    url: http://www.cnblogs.com
+  description: Golang api of demo
+  termsOfService: http://github.com
+  title: Golang Esign API
+  version: "1.0"
+paths:
+  /oracle/invoke:
+    post:
+      parameters:
+      - description: QueryBaseInfo
+        in: body
+        name: QueryBaseInfo
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Envelope'
+      summary: 获取数据
+swagger: "2.0"

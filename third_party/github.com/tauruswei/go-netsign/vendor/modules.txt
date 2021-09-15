@@ -1,0 +1,2 @@
+# github.com/thedevsaddam/gojsonq v2.3.0+incompatible
+github.com/thedevsaddam/gojsonq

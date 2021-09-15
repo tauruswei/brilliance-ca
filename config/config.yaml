@@ -1,0 +1,38 @@
+# 区块链代理相关配置
+#
+# Schema version of the content. Used by the blkproxy to apply the corresponding parsing rules.
+#
+version: 1.0.0
+
+#
+# The server section used by blkproxy.
+#
+server:
+  restful:
+    listenAddress: 9445                # 端口
+  logging:
+    formatter: "%{color}%{time:2006-01-02 15:04:05.000} %{shortfile:15s} [->] %{shortfunc:-10s} %{level:.4s} %{id:03x}%{color:reset} %{message}"
+    level: INFO                         # 默认DEBUG
+  msp:
+    cert: /var/hyperledger/brilliance-oracle/msp/admin.crt
+    key: /var/hyperledger/brilliance-oracle/msp/admin.key
+tls:
+  enable: false
+  server:
+    cert: /var/hyperledger/brilliance-oracle/tls/server.crt
+    key: /var/hyperledger/brilliance-oracle/tls/server.key
+#client:
+#  # [Optional] BCCSP config for the client. Used by GO SDK.
+#  BCCSP:
+#    security:
+#      enabled: true
+#      default:
+#        provider: "CNCC_GM"                  #国密
+#      hashAlgorithm: "GMSM3"
+##        provider: "SW"
+##      hashAlgorithm: "SHA2"
+#      softVerify: true
+#      level: 256
+db:
+  mysql:
+    connection: certificate:certificate@tcp(127.0.0.1:3308)/certificatedb          #数据库连接配置

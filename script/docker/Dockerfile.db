@@ -1,0 +1,11 @@
+FROM mysql:5.7
+
+COPY script/db/config/mysql.cnf /etc/mysql/conf.d/mysql.cnf
+
+ENV MYSQL_ROOT_PASSWORD certificate
+ENV MYSQL_USER certificate
+ENV MYSQL_PASSWORD certificate
+ENV MYSQL_DATABASE certificatedb
+
+COPY script/db/create_table.sql /docker-entrypoint-initdb.d/
+RUN chmod 777 /docker-entrypoint-initdb.d/create_table.sql
