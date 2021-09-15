@@ -13,12 +13,12 @@ type CodeMsg struct {
 	Msg  string
 }
 
-func (codemsg CodeMsg) FillArgs(args ...string) CodeMsg{
+func (codemsg CodeMsg) FillArgs(args ...string) CodeMsg {
 	codemsg.Msg = fmt.Sprintf(codemsg.Msg, args)
 	return codemsg
 }
 
 var (
-	SUCCESS      = CodeMsg{Code: 0, Msg: "SUCCESS"}
+	SUCCESS      = CodeMsg{Code: 200, Msg: "SUCCESS"}
 	SERVER_ERROR = CodeMsg{Code: 500100, Msg: "服务端异常: %s"}
 )
