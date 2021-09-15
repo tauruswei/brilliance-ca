@@ -17,11 +17,9 @@ var doc = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://github.com",
         "contact": {
-            "name": "API Support",
-            "url": "http://www.cnblogs.com",
-            "email": "×××@qq.com"
+            "name": "tauruswei",
+            "url": "https://github.com/tauruswei/brilliance-ca.git"
         },
         "version": "{{.Version}}"
     },
@@ -359,8 +357,8 @@ var SwaggerInfo = swaggerInfo{
 	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
-	Title:       "Golang Esign API",
-	Description: "Golang api of demo",
+	Title:       "Brilliance CA API",
+	Description: "Brilliance CA Restful API",
 }
 
 type s struct{}

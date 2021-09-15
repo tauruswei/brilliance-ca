@@ -93,12 +93,10 @@ definitions:
     type: object
 info:
   contact:
-    email: ×××@qq.com
-    name: API Support
-    url: http://www.cnblogs.com
-  description: Golang api of demo
-  termsOfService: http://github.com
-  title: Golang Esign API
+    name: tauruswei
+    url: https://github.com/tauruswei/brilliance-ca.git
+  description: Brilliance CA Restful API
+  title: Brilliance CA API
   version: "1.0"
 paths:
   /ca/newCa:

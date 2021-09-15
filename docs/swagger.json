@@ -1,13 +1,11 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Golang api of demo",
-        "title": "Golang Esign API",
-        "termsOfService": "http://github.com",
+        "description": "Brilliance CA Restful API",
+        "title": "Brilliance CA API",
         "contact": {
-            "name": "API Support",
-            "url": "http://www.cnblogs.com",
-            "email": "×××@qq.com"
+            "name": "tauruswei",
+            "url": "https://github.com/tauruswei/brilliance-ca.git"
         },
         "version": "1.0"
     },

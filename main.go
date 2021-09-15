@@ -40,13 +40,13 @@ func init() {
 
 }
 
-// @title Golang Esign API
+// @title Brilliance CA API
 // @version 1.0
-// @description  Golang api of demo
-// @termsOfService http://github.com
-// @contact.name API Support
-// @contact.url http://www.cnblogs.com
-// @contact.email ×××@qq.com
+// @description  Brilliance CA Restful API
+//// @termsOfService https://github.com/tauruswei/brilliance-ca.git
+// @contact.name tauruswei
+// @contact.url https://github.com/tauruswei/brilliance-ca.git
+//// @contact.email ×××@qq.com
 func main() {
 	//数据库连接
 	dao.OpenSqlDb()
