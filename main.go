@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/brilliance/ca/backend/dao"
-	"github.com/brilliance/ca/service"
 	"github.com/brilliance/ca/common/config"
 	"github.com/brilliance/ca/common/log"
 	"github.com/brilliance/ca/router"
@@ -35,10 +34,10 @@ func initLogging() {
 func init() {
 	// 从配置文件读取配置
 	config.InitConfig([]string{config_yaml})
-	
+
 	// 初始化日志
 	initLogging()
-	
+
 }
 
 // @title Golang Esign API
@@ -52,23 +51,23 @@ func main() {
 	//数据库连接
 	dao.OpenSqlDb()
 	defer dao.CloseSqlDb()
-	
+
 	err := dao.NewDBEngine() // 兼容原 db 操作和 gorm 操作
 	if err != nil {
 		panic(err)
 	}
-	
+
 	defer func() {
 		if err := recover(); err != nil {
 			log.Error(err)
 		}
 	}()
-	
-	// 初始化service
-	service.NewService(config_yaml)
-	
+
+	//// 初始化service
+	//service.NewService(config_yaml)
+
 	//go checkMem()
-	
+
 	route := router.CreateRouter()
 	portString := config.GetRestfulListenAddress()
 	port, err := strconv.Atoi(portString)
@@ -91,7 +90,7 @@ func main() {
 	} else {
 		route.Run(":" + config.GetRestfulListenAddress())
 	}
-	
+
 }
 
 func TlsHandler(port int) gin.HandlerFunc {
@@ -101,11 +100,11 @@ func TlsHandler(port int) gin.HandlerFunc {
 			SSLHost:     ":" + strconv.Itoa(port),
 		})
 		err := secureMiddleware.Process(c.Writer, c.Request)
-		
+
 		if err != nil {
 			return
 		}
-		
+
 		c.Next()
 	}
 }

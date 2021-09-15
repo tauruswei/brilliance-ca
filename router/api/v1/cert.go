@@ -14,12 +14,14 @@ import (
  * @Date: 2021/9/8 下午5:19
  */
 
-// @Summary Create a new CA certificate
-// @Consume  json
+// @Tags CA
+// @Summary 新建 CA
+// @Description Create a new CA certificate
+// @Param CertificateRequest body model.CertificateRequest true "证书请求信息"
+// @Accept  json
 // @Produce  json
-// @Success 200 {object} app.Response
-// @Failure 500 {object} app.Response
-// @Router /api/v1/articles/{id} [get]
+// @Success 200 {object} Result.Result
+// @Router /ca/newCa [post]
 func NewCA(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.CertificateRequest{}
@@ -36,6 +38,14 @@ func NewCA(c *gin.Context) {
 	g.Success(ca)
 }
 
+// @Tags CA
+// @Summary CA 签发证书
+// @Description CA sign a new certificate
+// @Param SignCertRequest body model.SignCertRequest true "证书请求信息"
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Result.Result
+// @Router /ca/signCert [post]
 func SignCert(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.SignCertRequest{}
@@ -67,6 +77,15 @@ func SignCert(c *gin.Context) {
 //	}
 //	g.Success(csr)
 //}
+
+// @Tags CA
+// @Summary 吊销用户证书
+// @Description Revoke a certificate
+// @Param RevokeRequest body model.RevokeRequest true "证书主题"
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Result.Result
+// @Router /ca/revokeCert [post]
 func RevokeCert(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.RevokeRequest{}
@@ -82,4 +101,3 @@ func RevokeCert(c *gin.Context) {
 	}
 	g.Success(nil)
 }
-

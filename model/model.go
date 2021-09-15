@@ -22,7 +22,7 @@ type Envelope struct {
 }
 
 /*
-  业务合约请求数据  结构体
+ 业务合约请求数据  结构体
 */
 type QueryBaseInfo struct {
 	ContractName string                 `json:contractName,omitempty"` // 应用合约名字
@@ -73,7 +73,7 @@ type CertificateSigningRequest struct {
 }
 
 type SignCertRequest struct {
-	KeyName            string `json:"keyName"`
+	KeyName string `json:"keyName"`
 	CertificateRequest
 }
 

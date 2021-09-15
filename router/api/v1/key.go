@@ -13,6 +13,15 @@ import (
  * @Description:
  * @Date: 2021/9/10 下午3:52
  */
+
+// @Tags KEY
+// @Summary 生成 keypair
+// @Description Gerate a keypair
+// @Param KeyRequest body model.KeyRequest true "密钥参数"
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Result.Result
+// @Router /key/newKeyPair [post]
 func GenKeyPair(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.KeyRequest{}

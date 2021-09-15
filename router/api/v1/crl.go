@@ -13,6 +13,15 @@ import (
  * @Description:
  * @Date: 2021/9/10 下午3:52
  */
+
+// @Tags CRL
+// @Summary 生成 crl
+// @Description Gerate a crl
+// @Param CrlRequest body model.CrlRequest true "证书主题"
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Result.Result
+// @Router /crl/genCrl [post]
 func GenCrl(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.CrlRequest{}

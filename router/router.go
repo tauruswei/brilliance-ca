@@ -27,18 +27,16 @@ func CreateRouter() *gin.Engine {
 	caGroup := router.Group("/ca/")
 	caGroup.POST("/newCa", v1.NewCA)
 	caGroup.POST("/signCert", v1.SignCert)
-	
-	certGroup := router.Group("/cert/")
-	certGroup.POST("/revokeCert", v1.RevokeCert)
+
+	//certGroup := router.Group("/cert/")
+	caGroup.POST("/revokeCert", v1.RevokeCert)
 	//certGroup.POST("/genCSR", v1.GenCSR)
-	
+
 	keyGroup := router.Group("/key/")
 	keyGroup.POST("/newKeyPair", v1.GenKeyPair)
-	
-	
+
 	crlGroup := router.Group("/crl/")
 	crlGroup.POST("/genCrl", v1.GenCrl)
-	
 
 	return router
 }

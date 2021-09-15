@@ -1,21 +1,95 @@
 definitions:
-  model.Envelope:
+  Result.Result:
     properties:
-      certificate:
-        description: 证书
-        items:
-          type: integer
-        type: array
+      code:
+        type: integer
       data:
-        description: 业务合约请求数据, 对应 QueryBaseInfo
-        items:
-          type: integer
-        type: array
-      sig:
-        description: 签名值
-        items:
-          type: integer
-        type: array
+        type: object
+      msg:
+        type: string
+    type: object
+  model.CertificateRequest:
+    properties:
+      commonName:
+        type: string
+      country:
+        type: string
+      cryptoType:
+        type: string
+      isCA:
+        type: boolean
+      issuerSubject:
+        type: string
+      keySize:
+        type: integer
+      locality:
+        type: string
+      org:
+        type: string
+      orgUnit:
+        type: string
+      period:
+        type: integer
+      postalCode:
+        type: string
+      provider:
+        type: string
+      province:
+        type: string
+      streetAddress:
+        type: string
+    type: object
+  model.CrlRequest:
+    properties:
+      issuerSubject:
+        type: string
+    type: object
+  model.KeyRequest:
+    properties:
+      cryptoType:
+        type: string
+      keySize:
+        type: integer
+      provider:
+        type: string
+    type: object
+  model.RevokeRequest:
+    properties:
+      certificateSubject:
+        type: string
+    type: object
+  model.SignCertRequest:
+    properties:
+      commonName:
+        type: string
+      country:
+        type: string
+      cryptoType:
+        type: string
+      isCA:
+        type: boolean
+      issuerSubject:
+        type: string
+      keyName:
+        type: string
+      keySize:
+        type: integer
+      locality:
+        type: string
+      org:
+        type: string
+      orgUnit:
+        type: string
+      period:
+        type: integer
+      postalCode:
+        type: string
+      provider:
+        type: string
+      province:
+        type: string
+      streetAddress:
+        type: string
     type: object
 info:
   contact:
@@ -27,25 +101,114 @@ info:
   title: Golang Esign API
   version: "1.0"
 paths:
-  /oracle/invoke:
+  /ca/newCa:
     post:
+      consumes:
+      - application/json
+      description: Create a new CA certificate
       parameters:
-      - description: QueryBaseInfo
+      - description: 证书请求信息
         in: body
-        name: QueryBaseInfo
+        name: CertificateRequest
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/model.CertificateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Envelope'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/Result.Result'
+      summary: 新建 CA
+      tags:
+      - CA
+  /ca/revokeCert:
+    post:
+      consumes:
+      - application/json
+      description: Revoke a certificate
+      parameters:
+      - description: 证书主题
+        in: body
+        name: RevokeRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.RevokeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/model.Envelope'
-      summary: 获取数据
+            $ref: '#/definitions/Result.Result'
+      summary: 吊销用户证书
+      tags:
+      - CA
+  /ca/signCert:
+    post:
+      consumes:
+      - application/json
+      description: CA sign a new certificate
+      parameters:
+      - description: 证书请求信息
+        in: body
+        name: SignCertRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.SignCertRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Result.Result'
+      summary: CA 签发证书
+      tags:
+      - CA
+  /crl/genCrl:
+    post:
+      consumes:
+      - application/json
+      description: Gerate a crl
+      parameters:
+      - description: 证书主题
+        in: body
+        name: CrlRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.CrlRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Result.Result'
+      summary: 生成 crl
+      tags:
+      - CRL
+  /key/newKeyPair:
+    post:
+      consumes:
+      - application/json
+      description: Gerate a keypair
+      parameters:
+      - description: 密钥参数
+        in: body
+        name: KeyRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.KeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Result.Result'
+      summary: 生成 keypair
+      tags:
+      - KEY
 swagger: "2.0"

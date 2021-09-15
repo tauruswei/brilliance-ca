@@ -23,29 +23,30 @@ import (
  * @Description:
  * @Date: 2021/9/10 下午3:50
  */
-const KEYPREFIX  = "KEY"
-func GenKeyPair(request model.KeyRequest)  (interface{},error){
+const KEYPREFIX = "KEY"
+
+func GenKeyPair(request model.KeyRequest) (*dao.Key, error) {
 	tx := global.SQLDB.Begin()
-	
+
 	// 生成私钥在本地的临时目录
 	//keyStore:=util.MakeTempdir()
 	//defer os.RemoveAll(keyStore)
-	
+
 	// 生成私钥
-	priKey, _, err := util.GenPrivateKey(request.KeySize,request.Provider,request.CryptoType,config.KeyStore)
+	priKey, _, err := util.GenPrivateKey(request.KeySize, request.Provider, request.CryptoType, config.KeyStore)
 	if err != nil {
-		logger.Error(util.GetErrorStackf(err,"生成私钥失败: Provider = %s, CryptoType = %s, KeySize= %d",request.Provider,
-			request.CryptoType,request.KeySize))
-		return nil, errors.WithMessagef(err,"生成私钥失败: Provider = %s, CryptoType = %s, KeySize= %d",request.Provider,
-			request.CryptoType,request.KeySize)
+		logger.Error(util.GetErrorStackf(err, "生成私钥失败: Provider = %s, CryptoType = %s, KeySize= %d", request.Provider,
+			request.CryptoType, request.KeySize))
+		return nil, errors.WithMessagef(err, "生成私钥失败: Provider = %s, CryptoType = %s, KeySize= %d", request.Provider,
+			request.CryptoType, request.KeySize)
 	}
 	privpem, err := util.LoadPrivateKey(config.KeyStore)
 	if err != nil {
-		logger.Error(util.GetErrorStackf (err,"读取密钥失败: keyStore = %s",config.KeyStore))
+		logger.Error(util.GetErrorStackf(err, "读取密钥失败: keyStore = %s", config.KeyStore))
 		tx.Rollback()
-		return nil, errors.WithMessagef(err,"读取密钥失败: keyStore = %s",config.KeyStore)
+		return nil, errors.WithMessagef(err, "读取密钥失败: keyStore = %s", config.KeyStore)
 	}
-	
+
 	pubKey, _ := priKey.PublicKey()
 	// der 编码的公钥
 	pubBytes, _ := pubKey.Bytes()
@@ -58,23 +59,23 @@ func GenKeyPair(request model.KeyRequest)  (interface{},error){
 		publicKey, err = sm2.ParseSm2PublicKey(pubBytes)
 	}
 	if err != nil {
-		logger.Error(util.GetErrorStackf (err,"解析密钥失败: publicKeyBytes = %s",base64.StdEncoding.EncodeToString(pubBytes)))
+		logger.Error(util.GetErrorStackf(err, "解析密钥失败: publicKeyBytes = %s", base64.StdEncoding.EncodeToString(pubBytes)))
 		tx.Rollback()
-		return nil, errors.WithMessagef(err,"解析密钥失败: publicKeyBytes = %s",base64.StdEncoding.EncodeToString(pubBytes))
+		return nil, errors.WithMessagef(err, "解析密钥失败: publicKeyBytes = %s", base64.StdEncoding.EncodeToString(pubBytes))
 	}
 	pubpem, _ := utils.PublicKeyToPEM(publicKey, nil)
-	key :=&(dao.Key{})
-	util.CopyFields(key,request)
-	key.Name = fmt.Sprintf(KEYPREFIX+util.RandStringInt())
+	key := &(dao.Key{})
+	util.CopyFields(key, request)
+	key.Name = fmt.Sprintf(KEYPREFIX + util.RandStringInt())
 	key.PrivateKey = privpem
 	key.PublicKey = string(pubpem)
 	key.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	key.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 	err = key.Create(tx)
 	if err != nil {
-		logger.Error(util.GetErrorStackf(err,"密钥保存数据库失败: privpem = %s",privpem))
+		logger.Error(util.GetErrorStackf(err, "密钥保存数据库失败: privpem = %s", privpem))
 		tx.Rollback()
-		return nil, errors.WithMessagef(err,"密钥保存数据库失败: privpem = %s",privpem)
+		return nil, errors.WithMessagef(err, "密钥保存数据库失败: privpem = %s", privpem)
 	}
 	tx.Commit()
 	return key, nil

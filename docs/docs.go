@@ -28,20 +28,27 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/oracle/invoke": {
+        "/ca/newCa": {
             "post": {
+                "description": "Create a new CA certificate",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "获取数据",
+                "tags": [
+                    "CA"
+                ],
+                "summary": "新建 CA",
                 "parameters": [
                     {
-                        "description": "QueryBaseInfo",
-                        "name": "QueryBaseInfo",
+                        "description": "证书请求信息",
+                        "name": "CertificateRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.CertificateRequest"
                         }
                     }
                 ],
@@ -49,13 +56,143 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Envelope"
+                            "$ref": "#/definitions/Result.Result"
                         }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                    }
+                }
+            }
+        },
+        "/ca/revokeCert": {
+            "post": {
+                "description": "Revoke a certificate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CA"
+                ],
+                "summary": "吊销用户证书",
+                "parameters": [
+                    {
+                        "description": "证书主题",
+                        "name": "RevokeRequest",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Envelope"
+                            "$ref": "#/definitions/model.RevokeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Result.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/ca/signCert": {
+            "post": {
+                "description": "CA sign a new certificate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CA"
+                ],
+                "summary": "CA 签发证书",
+                "parameters": [
+                    {
+                        "description": "证书请求信息",
+                        "name": "SignCertRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SignCertRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Result.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/crl/genCrl": {
+            "post": {
+                "description": "Gerate a crl",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CRL"
+                ],
+                "summary": "生成 crl",
+                "parameters": [
+                    {
+                        "description": "证书主题",
+                        "name": "CrlRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CrlRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Result.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/key/newKeyPair": {
+            "post": {
+                "description": "Gerate a keypair",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KEY"
+                ],
+                "summary": "生成 keypair",
+                "parameters": [
+                    {
+                        "description": "密钥参数",
+                        "name": "KeyRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.KeyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Result.Result"
                         }
                     }
                 }
@@ -63,29 +200,144 @@ var doc = `{
         }
     },
     "definitions": {
-        "model.Envelope": {
+        "Result.Result": {
             "type": "object",
             "properties": {
-                "certificate": {
-                    "description": "证书",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "code": {
+                    "type": "integer"
                 },
                 "data": {
-                    "description": "业务合约请求数据, 对应 QueryBaseInfo",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "type": "object"
                 },
-                "sig": {
-                    "description": "签名值",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.CertificateRequest": {
+            "type": "object",
+            "properties": {
+                "commonName": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "cryptoType": {
+                    "type": "string"
+                },
+                "isCA": {
+                    "type": "boolean"
+                },
+                "issuerSubject": {
+                    "type": "string"
+                },
+                "keySize": {
+                    "type": "integer"
+                },
+                "locality": {
+                    "type": "string"
+                },
+                "org": {
+                    "type": "string"
+                },
+                "orgUnit": {
+                    "type": "string"
+                },
+                "period": {
+                    "type": "integer"
+                },
+                "postalCode": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "streetAddress": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.CrlRequest": {
+            "type": "object",
+            "properties": {
+                "issuerSubject": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.KeyRequest": {
+            "type": "object",
+            "properties": {
+                "cryptoType": {
+                    "type": "string"
+                },
+                "keySize": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RevokeRequest": {
+            "type": "object",
+            "properties": {
+                "certificateSubject": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SignCertRequest": {
+            "type": "object",
+            "properties": {
+                "commonName": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "cryptoType": {
+                    "type": "string"
+                },
+                "isCA": {
+                    "type": "boolean"
+                },
+                "issuerSubject": {
+                    "type": "string"
+                },
+                "keyName": {
+                    "type": "string"
+                },
+                "keySize": {
+                    "type": "integer"
+                },
+                "locality": {
+                    "type": "string"
+                },
+                "org": {
+                    "type": "string"
+                },
+                "orgUnit": {
+                    "type": "string"
+                },
+                "period": {
+                    "type": "integer"
+                },
+                "postalCode": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "streetAddress": {
+                    "type": "string"
                 }
             }
         }

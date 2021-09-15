@@ -20,7 +20,7 @@ import (
  * @Description:
  * @Date: 2021/9/8 下午5:20
  */
-func NewCA(request model.CertificateRequest) (interface{}, error) {
+func NewCA(request model.CertificateRequest) (*dao.Cert, error) {
 	tx := global.SQLDB.Begin()
 	// 生成私钥在本地的临时目录
 	//keyStore:=util.MakeTempdir()
@@ -106,10 +106,10 @@ func NewCA(request model.CertificateRequest) (interface{}, error) {
 		return nil, errors.WithMessagef(err, "证书保存数据库失败: cert = %+v", cert)
 	}
 	tx.Commit()
-	return string(certificate), nil
+	return cert, nil
 }
 
-func SignCert(request model.SignCertRequest) (interface{}, error) {
+func SignCert(request model.SignCertRequest) (*dao.Cert, error) {
 	tx := global.SQLDB.Begin()
 
 	key, err := (&dao.Key{Name: request.KeyName}).GetByKeyName(global.SQLDB)
@@ -143,25 +143,25 @@ func SignCert(request model.SignCertRequest) (interface{}, error) {
 		tx.Rollback()
 		return nil, errors.WithMessagef(err, "获取 issuer signer 失败：caCert = %+v", caCert)
 	}
-	if !strings.EqualFold(caCert.CryptoType,key.CryptoType){
-		logger.Error(util.GetErrorStackf(err, "crypto type 不一致：caCert ctyptoType = %s, key cryptoType = %s", caCert.CryptoType,key.CryptoType))
+	if !strings.EqualFold(caCert.CryptoType, key.CryptoType) {
+		logger.Error(util.GetErrorStackf(err, "crypto type 不一致：caCert ctyptoType = %s, key cryptoType = %s", caCert.CryptoType, key.CryptoType))
 		tx.Rollback()
 		return nil, errors.Errorf("crypto type 不一致：caCert ctyptoType = %s, key cryptoType = %s", caCert.CryptoType, key.CryptoType)
 	}
-	if !strings.EqualFold(caCert.Provider,key.Provider){
-		logger.Error(util.GetErrorStackf(err, "crypto provider 不一致：caCert provider = %s, key provider = %s", caCert.Provider,key.Provider))
+	if !strings.EqualFold(caCert.Provider, key.Provider) {
+		logger.Error(util.GetErrorStackf(err, "crypto provider 不一致：caCert provider = %s, key provider = %s", caCert.Provider, key.Provider))
 		tx.Rollback()
-		return nil, errors.Errorf("crypto provider 不一致：caCert provider = %s, key provider = %s", caCert.Provider,key.Provider)
+		return nil, errors.Errorf("crypto provider 不一致：caCert provider = %s, key provider = %s", caCert.Provider, key.Provider)
 	}
 	request.CryptoType = caCert.CryptoType
-	
+
 	// 获取签名证书的私钥
 	priv, _, err := util.ImportPrivateKey(0, key.PrivateKey, caCert.Provider, caCert.CryptoType, "")
 	if err != nil {
 		logger.Error(util.GetErrorStackf(err, "获取 private key 失败: keyName = %s", request.KeyName))
 		return nil, errors.WithMessagef(err, "获取 private key 失败:  keyName = %s", request.KeyName)
 	}
-	
+
 	// 签发证书
 	cerSubject := util.SubjectTemplateAdditional(request.CertificateRequest.CommonName, request.CertificateRequest.Org, request.CertificateRequest.Country,
 		request.CertificateRequest.Province,
@@ -207,7 +207,7 @@ func SignCert(request model.SignCertRequest) (interface{}, error) {
 		return nil, errors.WithMessagef(err, "证书保存数据库失败: cert = %+v", cert)
 	}
 	tx.Commit()
-	return string(certificate), nil
+	return cert, nil
 }
 func RevokeCert(request model.RevokeRequest) error {
 	tx := global.SQLDB.Begin()
@@ -217,8 +217,8 @@ func RevokeCert(request model.RevokeRequest) error {
 		tx.Rollback()
 		return errors.WithMessagef(err, "获取证书主题失败：certificateSubject = %s", request.CertificateSubject)
 	}
-	
-	cert, err := (&dao.Cert{SubjectId:subject.Id}).GetBySubjectId(tx)
+
+	cert, err := (&dao.Cert{SubjectId: subject.Id}).GetBySubjectId(tx)
 	if err != nil {
 		logger.Error(util.GetErrorStackf(err, "获取证书失败：certificateSubject = %s", request.CertificateSubject))
 		tx.Rollback()

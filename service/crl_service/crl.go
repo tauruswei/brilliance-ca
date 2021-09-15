@@ -23,13 +23,14 @@ import (
  * @Description:
  * @Date: 2021/9/10 下午3:50
  */
-func GenCrl(request model.CrlRequest) (interface{}, error){
+
+func GenCrl(request model.CrlRequest) (*dao.Crl, error) {
 	tx := global.SQLDB.Begin()
-	
+
 	// 生成私钥的临时目录
 	keyStore := util.MakeTempdir()
 	defer os.RemoveAll(keyStore)
-	
+
 	// 获取 issuer 证书主题
 	cert := &dao.Cert{}
 	var certs []*dao.Cert
@@ -43,7 +44,7 @@ func GenCrl(request model.CrlRequest) (interface{}, error){
 		cert.IssuerId = certificateSubject.Id
 		cert.CertificateStatus = 2
 		certs, err = cert.GetByIssuerIdAndStatus(tx)
-		
+
 		if err != nil {
 			logger.Errorf(util.GetErrorStackf(err, "获取 revoked certs 失败：request = %v", request))
 			tx.Rollback()
@@ -57,19 +58,18 @@ func GenCrl(request model.CrlRequest) (interface{}, error){
 			return nil, errors.WithMessagef(err, "获取 issuer 证书失败：request = %v", request)
 		}
 	}
-	
-	_, signer, err := util.ImportPrivateKey(caCert.KeySize, caCert.PrivateKey,caCert.Provider,
+
+	_, signer, err := util.ImportPrivateKey(caCert.KeySize, caCert.PrivateKey, caCert.Provider,
 		caCert.CryptoType, "")
 	expiry := time.Now().UTC().Add(100 * 365 * 24 * time.Hour)
 	caCertificate, err := sm2.ReadCertificateFromMem([]byte(caCert.Certificate))
-	
-	
+
 	var certificates []sm2.CertificateRecord
 	var certificate sm2.CertificateRecord
 	for _, certi := range certs {
 		signCert, err := sm2.ReadCertificateFromMem([]byte(certi.Certificate))
 		if err != nil {
-			
+
 			logger.Error(util.GetErrorStackf(err, "解析证书失败：certificate = %s", certi))
 			tx.Rollback()
 			return nil, errors.WithMessagef(err, "解析证书失败：certificate = %s", certi)
@@ -80,10 +80,9 @@ func GenCrl(request model.CrlRequest) (interface{}, error){
 		certificate.Expiry = time.Now().Add(100 * 365 * 24 * time.Hour)
 		certificates = append(certificates, certificate)
 	}
-	
-	
+
 	var revokedCerts []pkix.RevokedCertificate
-	
+
 	// For every record, create a new revokedCertificate and add it to slice
 	for _, certRecord := range certificates {
 		revokedCert := pkix.RevokedCertificate{
@@ -93,37 +92,37 @@ func GenCrl(request model.CrlRequest) (interface{}, error){
 		revokedCerts = append(revokedCerts, revokedCert)
 	}
 	crlBytes, err := caCertificate.CreateCRL(rand.Reader, signer, revokedCerts, time.Now(), expiry)
-	
+
 	//fmt.Println(base64.StdEncoding.EncodeToString(crlBytes))
-	
+
 	if err != nil {
 		logger.Error(util.GetErrorStack(err, "生成crl文件失败"))
 		tx.Rollback()
 		return nil, errors.WithMessagef(err, "生成crl文件失败")
 	}
-	
+
 	blk := &pem.Block{Bytes: crlBytes, Type: "X509 CRL"}
-	
+
 	crlPem := pem.EncodeToMemory(blk)
-	
-	crl:=&dao.Crl{}
+
+	crl := &dao.Crl{}
 	crl.IssuerId = caCert.SubjectId
 	splits := strings.Split(request.IssuerSubject, ",")
 	for _, str := range splits {
-		if strings.Contains(str,"CN="){
-			crl.Name = fmt.Sprintf("%s-CRL",strings.Split(str, "=")[1])
+		if strings.Contains(str, "CN=") {
+			crl.Name = fmt.Sprintf("%s-CRL", strings.Split(str, "=")[1])
 		}
 	}
-	
+
 	crl.Crl = string(crlPem)
 	crl.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	crl.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
-	
-	crl1, err := (&dao.Crl{IssuerId:caCert.SubjectId}).GetByIssueId(tx)
+
+	crl1, err := (&dao.Crl{IssuerId: caCert.SubjectId}).GetByIssueId(tx)
 	if crl1 == nil {
 		err = crl.Create(tx)
 	} else {
-		err = (&dao.Crl{Id:crl1.Id, Crl: string(crlPem), UpdateTime: time.Now().Format("2006-01-02 15:04:05")}).UpdateCrl(tx)
+		err = (&dao.Crl{Id: crl1.Id, Crl: string(crlPem), UpdateTime: time.Now().Format("2006-01-02 15:04:05")}).UpdateCrl(tx)
 	}
 	if err != nil {
 		logger.Error(util.GetErrorStack(err, "crl文件保存到数据库失败"))
@@ -131,6 +130,6 @@ func GenCrl(request model.CrlRequest) (interface{}, error){
 		return nil, errors.WithMessage(err, "crl文件保存到数据库失败")
 	}
 	tx.Commit()
-	return string(crlPem),nil
-	
+	return crl, nil
+
 }
