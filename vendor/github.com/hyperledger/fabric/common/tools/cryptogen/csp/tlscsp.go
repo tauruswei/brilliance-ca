@@ -25,7 +25,6 @@ func GenerateTlsPrivateKey(keystorePath string) (bccsp.Key, crypto.Signer, error
 		SwOpts: &factory.SwOpts{
 			HashFamily: "SHA2",
 			SecLevel:   256,
-
 			FileKeystore: &factory.FileKeystoreOpts{
 				KeyStorePath: keystorePath,
 			},

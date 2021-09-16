@@ -125,30 +125,31 @@ func AESDecryptConnection(keyBase64 string, connBase64 string) string {
 	}
 	return string(decryptedConn)
 }
+
 // LoadPrivateKey loads a private key from file in keystorePath
 func LoadPrivateKey(keystorePath string) (string, error) {
 	var err error
-	
+
 	var rawKey string
-	
+
 	walkFunc := func(path string, info os.FileInfo, err error) error {
-			rawKeyByte, err := ioutil.ReadFile(path)
+		rawKeyByte, err := ioutil.ReadFile(path)
 		if strings.HasSuffix(path, "_sk") {
 			if err != nil {
-				logger.Error(GetErrorStackf(err,"读取密钥失败: path = %s",path))
-				return errors.WithMessagef(err,"读取密钥失败: path = %s",path)
+				logger.Error(GetErrorStackf(err, "读取密钥失败: path = %s", path))
+				return errors.WithMessagef(err, "读取密钥失败: path = %s", path)
 			}
 			rawKey = string(rawKeyByte)
 		}
 		return nil
 	}
-	
+
 	err = filepath.Walk(keystorePath, walkFunc)
 	if err != nil {
-		logger.Error(GetErrorStackf(err,"读取密钥失败: keystorePath = %s",keystorePath))
-		return "",errors.WithMessagef(err,"读取密钥失败: keystorePath = %s",keystorePath)
+		logger.Error(GetErrorStackf(err, "读取密钥失败: keystorePath = %s", keystorePath))
+		return "", errors.WithMessagef(err, "读取密钥失败: keystorePath = %s", keystorePath)
 	}
-	
+
 	return rawKey, err
 }
 
@@ -157,13 +158,13 @@ func ImportPrivateKey(keySize int, key, provider, cryptoType, keyStore string) (
 	//// 生成临时目录
 	//keyStore = MakeTempdir()
 	//defer os.RemoveAll(keyStore)
-	csp, err :=config.GetBCCSP(provider,"SHA2",256)
+	csp, err := config.GetBCCSP(provider, "SHA2", 256)
 	if err != nil {
 		logger.Error(GetErrorStack(err, "获取 bccsp 实例失败"))
 		return nil, nil, errors.WithMessage(err, "获取 bccsp 实例失败")
 	}
 	block, _ := pem.Decode([]byte(key))
-	
+
 	switch strings.ToUpper(cryptoType) {
 	case "ECC":
 		priv, err = csp.KeyImport(block.Bytes, &bccsp.ECDSAPrivateKeyImportOpts{Temporary: false})
@@ -173,13 +174,13 @@ func ImportPrivateKey(keySize int, key, provider, cryptoType, keyStore string) (
 		logger.Error(GetErrorStackf(err, "不支持的算法：%s", cryptoType))
 		return nil, nil, errors.WithMessagef(err, "不支持的算法：%s", cryptoType)
 	}
-	
+
 	if err == nil {
 		s, err = signer.New(csp, priv)
 		if err != nil {
 			logger.Error(GetErrorStack(err, "构建 crypto signer 失败"))
 			return nil, nil, errors.WithMessage(err, "构建 crypto signer 失败")
-			
+
 		}
 	}
 	return
@@ -189,14 +190,14 @@ func ImportPublicKey(keySize int, key, provider, cryptoType, keyStore string) (p
 	// 生成临时目录
 	//keyStore = MakeTempdir()
 	//defer os.RemoveAll(keyStore)
-	csp, err :=config.GetBCCSP(provider,"SHA2",256)
+	csp, err := config.GetBCCSP(provider, "SHA2", 256)
 	if err != nil {
 		logger.Error(GetErrorStack(err, "获取 bccsp 实例失败"))
 		return nil, errors.WithMessage(err, "获取 bccsp 实例失败")
 	}
-	
+
 	block, _ := pem.Decode([]byte(key))
-	
+
 	//switch strings.ToUpper(cryptoType) {
 	//case "ECC":
 	//	priv, err = csp.KeyImport(block.Bytes,&bccsp.ECDSAGoPublicKeyImportOpts{Temporary: false})
@@ -211,16 +212,16 @@ func ImportPublicKey(keySize int, key, provider, cryptoType, keyStore string) (p
 
 // default template for X509 certificates
 func X509Template(request *model.CertificateRequest) x509.Certificate {
-	
+
 	// generate a serial number
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, _ := rand.Int(rand.Reader, serialNumberLimit)
-	
+
 	// set expiry to around 10 years
 	expiry := time.Duration(request.Period) * time.Hour
 	// round minute and backdate 5 minutes
 	notBefore := time.Now().Round(time.Minute).Add(-5 * time.Minute)
-	
+
 	//basic template to use
 	x509 := x509.Certificate{
 		SerialNumber:          serialNumber,
@@ -244,7 +245,7 @@ func SubjectTemplateAdditional(commonName, org, country, province, locality, org
 	if len(province) >= 1 {
 		name.Province = []string{province}
 	}
-	
+
 	if len(locality) >= 1 {
 		name.Locality = []string{locality}
 	}
@@ -270,19 +271,18 @@ func SubjectTemplate() pkix.Name {
 }
 
 func GenCertificate(request model.CertificateRequest, priv bccsp.Key, s crypto.Signer, subject pkix.Name,
-	ku x509.KeyUsage, eku []x509.ExtKeyUsage) ([]byte,
-	error) {
+	ku x509.KeyUsage, eku []x509.ExtKeyUsage, cryptoType string) ([]byte, error) {
 	//priv, signer, err := GenPrivateKey(request)
 	//if err != nil {
 	//	return nil, err
 	//}
-	csr, err := GenCertificateSignRequest(&request, priv, subject, ku, eku)
-	
+	csr, err := GenCertificateSignRequest(&request, priv, subject, ku, eku, cryptoType)
+
 	if err != nil {
 		logger.Error(GetErrorStackf(err, "构建证书请求失败：%+v", request))
 		return nil, errors.WithMessagef(err, "构建证书请求失败：%+v", request)
 	}
-	switch strings.ToUpper(request.CryptoType) {
+	switch strings.ToUpper(cryptoType) {
 	case "ECC":
 		return x509.CreateCertificate(rand.Reader, csr.(*x509.Certificate), csr.(*x509.Certificate),
 			(csr.(*x509.Certificate)).PublicKey.(*ecdsa.PublicKey), s)
@@ -294,13 +294,13 @@ func GenCertificate(request model.CertificateRequest, priv bccsp.Key, s crypto.S
 }
 
 func GenPrivateKey(keySize int, provider, cryptoType, keyStore string) (priv bccsp.Key, s crypto.Signer, err error) {
-	
-	csp, err :=config.GetBCCSP(provider,"SHA2",256)
+
+	csp, err := config.GetBCCSP(provider, "SHA2", 256)
 	if err != nil {
 		logger.Error(GetErrorStack(err, "获取 bccsp 实例失败"))
 		return nil, nil, errors.WithMessage(err, "获取 bccsp 实例失败")
 	}
-	
+
 	switch strings.ToUpper(cryptoType) {
 	case "ECC":
 		switch keySize {
@@ -322,32 +322,33 @@ func GenPrivateKey(keySize int, provider, cryptoType, keyStore string) (priv bcc
 		logger.Error(GetErrorStackf(err, "生成密钥失败：CryptoType = %s, KeySize = %d", cryptoType, keySize))
 		return nil, nil, errors.WithMessagef(err, "生成密钥失败：CryptoType = %s, KeySize = %d", cryptoType, keySize)
 	}
-	
+
 	if err == nil {
 		s, err = signer.New(csp, priv)
 		if err != nil {
 			logger.Error(GetErrorStack(err, "构建 crypto signer 失败"))
 			return nil, nil, errors.WithMessage(err, "构建 crypto signer 失败")
-			
+
 		}
 	}
 	return
 }
 
-func GenCertificateSignRequest(request *model.CertificateRequest, priv bccsp.Key, subject pkix.Name, ku x509.KeyUsage, eku []x509.ExtKeyUsage) (interface{}, error) {
+func GenCertificateSignRequest(request *model.CertificateRequest, priv bccsp.Key, subject pkix.Name,
+	ku x509.KeyUsage, eku []x509.ExtKeyUsage, cryptoType string) (interface{}, error) {
 	var err error
 	var pubKey interface{}
 	template := X509Template(request)
 	template.IsCA = true
 	template.KeyUsage = ku
 	template.ExtKeyUsage = eku
-	
+
 	//subject := subjectTemplateAdditional(request.CommonName,request.Org,request.Country,request.Province, request.Locality, request.OrgUnit,
 	//	request.StreetAddress,request.PostalCode)
-	
+
 	template.Subject = subject
 	template.SubjectKeyId = priv.SKI()
-	switch strings.ToUpper(request.CryptoType) {
+	switch strings.ToUpper(cryptoType) {
 	case "ECC":
 		pubKey, err = csp.GetECPublicKey(priv)
 		if err != nil {
@@ -374,14 +375,14 @@ func CopyFields(des interface{}, source interface{}, fields ...string) (err erro
 	av := reflect.ValueOf(des)
 	bt := reflect.TypeOf(source)
 	bv := reflect.ValueOf(source)
-	
+
 	// 简单判断下
 	if at.Kind() != reflect.Ptr {
 		err = fmt.Errorf("a must be a struct pointer")
 		return
 	}
 	av = reflect.ValueOf(av.Interface())
-	
+
 	// 要复制哪些字段
 	_fields := make([]string, 0)
 	if len(fields) > 0 {
@@ -391,18 +392,18 @@ func CopyFields(des interface{}, source interface{}, fields ...string) (err erro
 			_fields = append(_fields, bt.Field(i).Name)
 		}
 	}
-	
+
 	if len(_fields) == 0 {
 		fmt.Println("no fields to copy")
 		return
 	}
-	
+
 	// 复制
 	for i := 0; i < len(_fields); i++ {
 		name := _fields[i]
 		f := av.Elem().FieldByName(name)
 		bValue := bv.FieldByName(name)
-		
+
 		// a中有同名的字段并且类型一致才复制
 		if f.IsValid() && f.Kind() == bValue.Kind() {
 			f.Set(bValue)
@@ -412,4 +413,3 @@ func CopyFields(des interface{}, source interface{}, fields ...string) (err erro
 	}
 	return
 }
-

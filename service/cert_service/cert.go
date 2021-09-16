@@ -3,11 +3,11 @@ package cert_service
 import (
 	"crypto"
 	"crypto/x509"
-	"github.com/brilliance/ca/backend/dao"
 	"github.com/brilliance/ca/common/config"
 	"github.com/brilliance/ca/common/global"
 	logger "github.com/brilliance/ca/common/log"
 	"github.com/brilliance/ca/common/util"
+	"github.com/brilliance/ca/dao"
 	"github.com/brilliance/ca/model"
 	"github.com/pkg/errors"
 	"strings"
@@ -20,20 +20,14 @@ import (
  * @Description:
  * @Date: 2021/9/8 下午5:20
  */
-func NewCA(request model.CertificateRequest) (*dao.Cert, error) {
+func NewCA(request model.NewCARequest) (*dao.Cert, error) {
 	tx := global.SQLDB.Begin()
 	// 生成私钥在本地的临时目录
 	//keyStore:=util.MakeTempdir()
 	//defer os.RemoveAll(keyStore)
-	// 生成私钥
-	priv, signer, err := util.GenPrivateKey(request.KeySize, request.Provider, request.CryptoType, config.KeyStore)
-	if err != nil {
-		logger.Error(util.GetErrorStack(err, ""))
-		tx.Rollback()
-		return nil, err
-	}
 
 	// 获取签发者证书
+	var caSigner crypto.Signer
 	subject := &(dao.Subject{CertificateSubject: request.IssuerSubject})
 	cert := &(dao.Cert{})
 	certificateSubject, err := subject.GetByCertificateSubject(tx)
@@ -51,23 +45,40 @@ func NewCA(request model.CertificateRequest) (*dao.Cert, error) {
 			return nil, errors.WithMessagef(err, "获取 issuer 证书失败：request = %+v", request)
 		}
 
-		_, signer, err = util.ImportPrivateKey(caCert.KeySize, caCert.PrivateKey, caCert.Provider, caCert.CryptoType, config.KeyStore)
+		_, caSigner, err = util.ImportPrivateKey(caCert.KeySize, caCert.PrivateKey, caCert.Provider, caCert.CryptoType,
+			config.KeyStore)
 		if err != nil {
 			logger.Error(util.GetErrorStackf(err, "获取 issuer signer 失败：caCert = %+v", caCert))
 			tx.Rollback()
 			return nil, errors.WithMessagef(err, "获取 issuer signer 失败：caCert = %+v", caCert)
 		}
+		if !strings.EqualFold(request.CryptoType, caCert.CryptoType) {
+			logger.Error(util.GetErrorStackf(err, "crypto type 不一致：caCert ctyptoType = %s, request cryptoType = %s",
+				caCert.CryptoType, request.CryptoType))
+			tx.Rollback()
+			return nil, errors.WithMessagef(err, "crypto type 不一致：caCert ctyptoType = %s, request cryptoType = %s",
+				caCert.CryptoType, request.CryptoType)
+		}
+	}
+
+	// 生成私钥
+	priv, _, err := util.GenPrivateKey(request.KeySize, request.Provider, request.CryptoType, config.KeyStore)
+	if err != nil {
+		logger.Error(util.GetErrorStack(err, ""))
+		tx.Rollback()
+		return nil, err
 	}
 
 	// 签发证书
 	cerSubject := util.SubjectTemplateAdditional(request.CommonName, request.Org, request.Country, request.Province, request.Locality, request.OrgUnit,
 		request.StreetAddress, request.PostalCode)
-	certificate, err := util.GenCertificate(request, priv, signer, cerSubject, x509.KeyUsageDigitalSignature|
-		x509.KeyUsageKeyEncipherment|x509.KeyUsageCertSign|
-		x509.KeyUsageCRLSign, []x509.ExtKeyUsage{
-		x509.ExtKeyUsageClientAuth,
-		x509.ExtKeyUsageServerAuth,
-	})
+	certificate, err := util.GenCertificate(request.CertificateRequest, priv, caSigner, cerSubject,
+		x509.KeyUsageDigitalSignature|
+			x509.KeyUsageKeyEncipherment|x509.KeyUsageCertSign|
+			x509.KeyUsageCRLSign, []x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageServerAuth,
+		}, request.CryptoType)
 	if err != nil {
 		logger.Error(util.GetErrorStackf(err, "生成证书失败"))
 		tx.Rollback()
@@ -120,7 +131,7 @@ func SignCert(request model.SignCertRequest) (*dao.Cert, error) {
 
 	// 获取签发者证书
 	var signer crypto.Signer
-	subject := &(dao.Subject{CertificateSubject: request.CertificateRequest.IssuerSubject})
+	subject := &(dao.Subject{CertificateSubject: request.IssuerSubject})
 	cert := &(dao.Cert{})
 	certificateSubject, err := subject.GetByCertificateSubject(tx)
 	if err != nil {
@@ -153,7 +164,6 @@ func SignCert(request model.SignCertRequest) (*dao.Cert, error) {
 		tx.Rollback()
 		return nil, errors.Errorf("crypto provider 不一致：caCert provider = %s, key provider = %s", caCert.Provider, key.Provider)
 	}
-	request.CryptoType = caCert.CryptoType
 
 	// 获取签名证书的私钥
 	priv, _, err := util.ImportPrivateKey(0, key.PrivateKey, caCert.Provider, caCert.CryptoType, "")
@@ -163,14 +173,15 @@ func SignCert(request model.SignCertRequest) (*dao.Cert, error) {
 	}
 
 	// 签发证书
-	cerSubject := util.SubjectTemplateAdditional(request.CertificateRequest.CommonName, request.CertificateRequest.Org, request.CertificateRequest.Country,
-		request.CertificateRequest.Province,
-		request.CertificateRequest.Locality, request.CertificateRequest.OrgUnit,
-		request.CertificateRequest.StreetAddress, request.CertificateRequest.PostalCode)
-	certificate, err := util.GenCertificate(request.CertificateRequest, priv, signer, cerSubject, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{
-		x509.ExtKeyUsageClientAuth,
-		x509.ExtKeyUsageServerAuth,
-	})
+	cerSubject := util.SubjectTemplateAdditional(request.CommonName, request.Org, request.Country,
+		request.Province,
+		request.Locality, request.OrgUnit,
+		request.StreetAddress, request.PostalCode)
+	certificate, err := util.GenCertificate(request.CertificateRequest, priv, signer, cerSubject, x509.KeyUsageDigitalSignature,
+		[]x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageServerAuth,
+		}, caCert.CryptoType)
 	if err != nil {
 		logger.Error(util.GetErrorStackf(err, "生成证书失败"))
 		tx.Rollback()
@@ -196,7 +207,7 @@ func SignCert(request model.SignCertRequest) (*dao.Cert, error) {
 	cert.Provider = key.Provider
 	cert.PrivateKey = key.PrivateKey
 	cert.StartDate = time.Now().Format("2006-01-02 15:04:05")
-	cert.Expiration = time.Now().Add(time.Duration(request.CertificateRequest.Period) * time.Hour).Format(
+	cert.Expiration = time.Now().Add(time.Duration(request.Period) * time.Hour).Format(
 		"2006-01-02 15:04:05")
 	cert.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	cert.UpdateTime = time.Now().Format("2006-01-02 15:04:05")

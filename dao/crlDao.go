@@ -33,18 +33,20 @@ func (c *Crl) TableName() string {
 func (c *Crl) Create(db *gorm.DB) error {
 	return db.Create(c).Error
 }
+
 // UpdateCrl 更新 crl
 func (c *Crl) UpdateCrl(db *gorm.DB) error {
 	return db.Model(c).Updates(Crl{Crl: c.Crl, UpdateTime: c.UpdateTime}).Error
 }
+
 // GetByIssueId 获取 crl
-func (c *Crl) GetByIssueId(db *gorm.DB) (*Crl,error) {
+func (c *Crl) GetByIssueId(db *gorm.DB) (*Crl, error) {
 	crl := &Crl{}
 	err := db.Where("issuer_id = ?", c.IssuerId).First(crl).Error
 	if err != nil {
-		logger.Error(util.GetErrorStackf(err,"获取 crl 失败, issuer_id = %d",c.IssuerId))
-		return nil, errors.WithMessagef(err,"获取 crl 失败, issuer_id = %d",c.IssuerId)
+		logger.Error(util.GetErrorStackf(err, "获取 crl 失败, issuer_id = %d", c.IssuerId))
+		return nil, errors.WithMessagef(err, "获取 crl 失败, issuer_id = %d", c.IssuerId)
 	}
-	return crl,nil
-	
+	return crl, nil
+
 }

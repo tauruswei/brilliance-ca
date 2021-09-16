@@ -36,12 +36,12 @@ func (k *Key) Create(db *gorm.DB) error {
 }
 
 // GetByKeyName
-func (k *Key) GetByKeyName(db *gorm.DB) (*Key,error) {
+func (k *Key) GetByKeyName(db *gorm.DB) (*Key, error) {
 	key := &Key{}
 	err := db.Where("name = ?", k.Name).First(key).Error
 	if err != nil {
-		logger.Error(util.GetErrorStackf(err,"获取 key 失败, name = %s",key.Name))
-		return nil, errors.WithMessagef(err,"获取 key 失败, name = %s",key.Name)
+		logger.Error(util.GetErrorStackf(err, "获取 key 失败, name = %s", key.Name))
+		return nil, errors.WithMessagef(err, "获取 key 失败, name = %s", key.Name)
 	}
-	return key,nil
+	return key, nil
 }

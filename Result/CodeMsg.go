@@ -19,6 +19,7 @@ func (codemsg CodeMsg) FillArgs(args ...string) CodeMsg {
 }
 
 var (
-	SUCCESS      = CodeMsg{Code: 200, Msg: "SUCCESS"}
-	SERVER_ERROR = CodeMsg{Code: 500100, Msg: "服务端异常: %s"}
+	SUCCESS               = CodeMsg{Code: 200, Msg: "SUCCESS"}
+	SERVER_ERROR          = CodeMsg{Code: 500100, Msg: "服务端异常: %s"}
+	PARAMETER_VALID_ERROR = CodeMsg{Code: 500101, Msg: "参数校验异常: %s"}
 )

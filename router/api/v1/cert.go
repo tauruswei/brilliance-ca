@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/brilliance/ca/Result"
+	"github.com/brilliance/ca/common/util"
 	"github.com/brilliance/ca/model"
 	"github.com/brilliance/ca/service/cert_service"
 	"github.com/gin-gonic/gin"
@@ -24,8 +25,8 @@ import (
 // @Router /ca/newCa [post]
 func NewCA(c *gin.Context) {
 	g := Result.Gin{C: c}
-	request := model.CertificateRequest{}
-	err := model.GetBody(c.Request.Body, &request)
+	request := model.NewCARequest{}
+	err := util.Validator(c, &request, g)
 	if err != nil {
 		g.Error(Result.SERVER_ERROR.FillArgs(err.Error()))
 		return
@@ -49,7 +50,7 @@ func NewCA(c *gin.Context) {
 func SignCert(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.SignCertRequest{}
-	err := model.GetBody(c.Request.Body, &request)
+	err := util.Validator(c, &request, g)
 	if err != nil {
 		g.Error(Result.SERVER_ERROR.FillArgs(err.Error()))
 		return
@@ -89,7 +90,7 @@ func SignCert(c *gin.Context) {
 func RevokeCert(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.RevokeRequest{}
-	err := model.GetBody(c.Request.Body, &request)
+	err := util.Validator(c, &request, g)
 	if err != nil {
 		g.Error(Result.SERVER_ERROR.FillArgs(err.Error()))
 		return

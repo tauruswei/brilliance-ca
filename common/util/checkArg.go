@@ -1,5 +1,15 @@
 package util
 
+import (
+	"encoding/json"
+	"github.com/brilliance/ca/Result"
+	"github.com/brilliance/ca/common/config"
+	"github.com/brilliance/ca/common/log"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
+)
+
 func CheckCCArg(ccName string, eventFilter string,
 	callbackUrl string, serisalNumber string) string {
 
@@ -59,4 +69,25 @@ func CheckUnBlcArg(serisalNumber string) string {
 	}
 
 	return ""
+}
+
+func Validator(c *gin.Context, v interface{}, g Result.Gin) error {
+	err := c.ShouldBind(v)
+	if err != nil {
+		errs, ok := err.(validator.ValidationErrors)
+		if !ok {
+			// 非validator.ValidationErrors类型错误直接返回
+			log.Error(GetErrorStack(err, ""))
+			return err
+		}
+		// validator.ValidationErrors类型错误
+		errormsg, err1 := json.Marshal(errs.Translate(config.Trans))
+		if err1 != nil {
+			log.Error(GetErrorStack(err1, ""))
+			return err1
+		}
+		log.Error(GetErrorStack(errors.Errorf("参数验证异常: %s", string(errormsg)), ""))
+		return errors.Errorf("参数验证异常: %s", string(errormsg))
+	}
+	return nil
 }

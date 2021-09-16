@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"github.com/hyperledger/fabric/bccsp/cncc"
 	"github.com/brilliance/ca/common/config"
 	logger "github.com/brilliance/ca/common/log"
+	"github.com/hyperledger/fabric/bccsp/cncc"
 )
 
 /**

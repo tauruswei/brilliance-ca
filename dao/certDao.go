@@ -20,7 +20,7 @@ type Cert struct {
 	Expiration        string `db:"expiration" json:"expiration,omitempty"`
 	CertificateStatus int    `db:"certificate_status" json:"certificateStatus,omitempty"`
 	Certificate       string `db:"certificate" json:"certificate,omitempty"`
-	PrivateKey        string `db:"private_key" json:"pprivateKey,omitempty"`
+	PrivateKey        string `db:"private_key" json:"privateKey,omitempty"`
 	CreateTime        string `db:"create_time" json:"createTime,omitempty"`
 	UpdateTime        string `db:"update_time" json:"updateTime,omitempty"`
 }

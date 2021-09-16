@@ -32,6 +32,7 @@ type QueryBaseInfo struct {
 }
 
 func GetBody(body io.ReadCloser, v interface{}) error {
+
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
 		return err
@@ -40,21 +41,22 @@ func GetBody(body io.ReadCloser, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
+type NewCARequest struct {
+	CertificateRequest
+	KeyRequest
+}
 type CertificateRequest struct {
 	Org           string `json:"org"`
 	OrgUnit       string `json:"orgUnit"`
 	Country       string `json:"country"`
-	CommonName    string `json:"commonName"`
+	CommonName    string `json:"commonName" binding:"required"`
 	Province      string `json:"province"`
 	Locality      string `json:"locality"`
 	StreetAddress string `json:"streetAddress"`
-	PostalCode    string `json:"postalCode"`
-	CryptoType    string `json:"cryptoType"`
-	IsCA          bool   `json:"isCA"`
-	KeySize       int    `json:"keySize"`
+	PostalCode    string `json:"postalCode" binding:"omitempty,email"`
 	IssuerSubject string `json:"issuerSubject"`
-	Period        int    `json:"period"`
-	Provider      string `json:"provider"`
+	IsCA          bool   `json:"isCA"`
+	Period        int    `json:"period" binding:"required,gt=0,lte=876000"`
 }
 type CertificateSigningRequest struct {
 	Org           string `json:"org"`
@@ -73,14 +75,14 @@ type CertificateSigningRequest struct {
 }
 
 type SignCertRequest struct {
-	KeyName string `json:"keyName"`
+	KeyName string `json:"keyName" binding:"required"`
 	CertificateRequest
 }
 
 type KeyRequest struct {
-	CryptoType string `json:"cryptoType"`
-	KeySize    int    `json:"keySize"`
-	Provider   string `json:"provider"`
+	CryptoType string `json:"cryptoType" binding:"required,oneof=ECC SM2"`
+	KeySize    int    `json:"keySize" binding:"required,oneof=256 384"`
+	Provider   string `json:"provider" binding:"required"`
 }
 type RevokeRequest struct {
 	CertificateSubject string `json:"certificateSubject"`

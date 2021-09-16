@@ -11,6 +11,7 @@ import (
  * @Date: 2021/7/15 下午7:42
  */
 var subjectColumns = " id, certificate_subject, create_time, update_time"
+
 type Subject struct {
 	Id                 int    `db:"id" `
 	CertificateSubject string `db:"certificate_subject"`
@@ -34,7 +35,7 @@ func (s *Subject) Create(db *gorm.DB) error {
 //	err := sqlDB.Select(&subject, sql, certificateSubject)
 //	return subject, err
 //}
-func(s *Subject)GetByCertificateSubject(db *gorm.DB)(*Subject, error){
+func (s *Subject) GetByCertificateSubject(db *gorm.DB) (*Subject, error) {
 	//var sql = "SELECT " + subjectColumns + " from subject where certificate_subject = ?"
 	//var subject Subject
 	//err := sqlDB.Select(&subject, sql, certificateSubject)
@@ -45,6 +46,3 @@ func(s *Subject)GetByCertificateSubject(db *gorm.DB)(*Subject, error){
 	}
 	return subject, nil
 }
-
-
-

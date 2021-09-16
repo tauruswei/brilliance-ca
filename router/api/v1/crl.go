@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/brilliance/ca/Result"
+	"github.com/brilliance/ca/common/util"
 	"github.com/brilliance/ca/model"
 	"github.com/brilliance/ca/service/crl_service"
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ import (
 func GenCrl(c *gin.Context) {
 	g := Result.Gin{C: c}
 	request := model.CrlRequest{}
-	err := model.GetBody(c.Request.Body, &request)
+	err := util.Validator(c, &request, g)
 	if err != nil {
 		g.Error(Result.SERVER_ERROR.FillArgs(err.Error()))
 		return

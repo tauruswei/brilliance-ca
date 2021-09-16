@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/brilliance/ca/backend/dao"
 	"github.com/brilliance/ca/common/config"
 	"github.com/brilliance/ca/common/log"
+	"github.com/brilliance/ca/dao"
 	"github.com/brilliance/ca/router"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
