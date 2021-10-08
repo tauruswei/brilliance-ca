@@ -35,4 +35,4 @@ tls:
 #      level: 256
 db:
   mysql:
-    connection: certificate:certificate@tcp(127.0.0.1:3308)/certificatedb          #数据库连接配置
+    connection: certificate:certificate@tcp(172.19.0.1:3308)/certificatedb          #数据库连接配置

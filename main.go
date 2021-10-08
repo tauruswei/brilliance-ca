@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-const config_yaml = "./config/configLocal.yaml"
+const config_yaml = "./config/config.yaml"
 
 func initLogging() {
 	defaultFormat := "%{color}%{time:2006-01-02 15:04:05.000} %{shortfile:15s} [->] %{shortfunc:-10s} %{level:.4s} %{id:03x}%{color:reset} %{message}"
@@ -76,11 +76,11 @@ func main() {
 	}
 	route.Use(TlsHandler(port))
 	// todo listenAddress   tls.server.cert   tls.server.key
-	keyBytes, err := ioutil.ReadFile(config.GetTlsServerKey())
-	if err != nil {
-		panic("read " + config.GetTlsServerKey() + " err: " + err.Error())
-	}
 	if viper.GetBool("tls.enable") {
+		keyBytes, err := ioutil.ReadFile(config.GetTlsServerKey())
+		if err != nil {
+			panic("read " + config.GetTlsServerKey() + " err: " + err.Error())
+		}
 		if strings.HasPrefix(string(keyBytes), "-----BEGIN PRIVATE KEY-----") {
 			route.RunTLS(":"+config.GetRestfulListenAddress(), config.GetTlsServerCert(), config.GetTlsServerKey())
 		} else {
